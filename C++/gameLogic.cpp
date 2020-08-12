@@ -2,6 +2,8 @@
 
 #include <random>
 
+#include "log.hpp"
+
 namespace randGen {
 std::default_random_engine ranEng((uint_fast32_t)time(NULL));
 unsigned int GetUnsignedMod(unsigned int mod) {
@@ -18,18 +20,16 @@ fruit::~fruit() {
 
 //std::vector<fruit> **fruitsVectorBoard;//2d array of vectors
 gameBoard::gameBoard(unsigned int width, unsigned int height) : width(width), height(height) {
-	outFile = fopen("/dev/pts/1", "w");
-	fprintf(outFile, "HaHa\n");
+	logger::log("HaHa\n");
 }
 
 gameBoard::~gameBoard() {
-	fclose(outFile);
 }
 
 void gameBoard::spawnFruit() {
 	unsigned int x = randGen::GetUnsignedMod(width), y = randGen::GetUnsignedMod(height);
 	fruitsList.emplace_back(x, y);
-	fprintf(outFile, "spawned fruit at %u %u\n", x, y);
+	logger::log("spawned fruit at %u %u\n", x, y);
 }
 bool gameBoard::canMoveTo(unsigned int x, unsigned int y) const {
 	if (x < width && y < height)
@@ -39,7 +39,7 @@ bool gameBoard::canMoveTo(unsigned int x, unsigned int y) const {
 bool gameBoard::moveToAndReturnIfScored(unsigned int x, unsigned int y) {
 	for(auto it = fruitsList.begin(); it != fruitsList.end(); ++it){
 		if(it->x == x && it->y == y){
-			fprintf(outFile, "colide with fruit, removing fruit and adding new\n");
+			logger::log("colide with fruit, removing fruit and adding new\n");
 			fruitsList.erase(it);
 			spawnFruit();
 			return 1;
@@ -47,12 +47,12 @@ bool gameBoard::moveToAndReturnIfScored(unsigned int x, unsigned int y) {
 	}
 	return 0;
 }
-void gameBoard::TryMoveTo(player& player, unsigned int x, unsigned int y) {
+void gameBoard::TryMoveToAndScore(player& player, unsigned int x, unsigned int y) {
 	if (canMoveTo(x, y)) {
 		unsigned int score = moveToAndReturnIfScored(x, y);
 		player.addScore(score);
 		player.movedTo(x, y);
-		fprintf(outFile, "moved to %u %u and scored %u\n", x, y, score);
+		logger::log("moved to %u %u\n", x, y);
 	}
 }
 pos gameBoard::getSize() const {
@@ -67,6 +67,7 @@ std::list<fruit>::const_iterator gameBoard::getFruitsListIteratorEnd() const {
 
 void player::addScore(unsigned add) {
 	score += add;
+	if (add) logger::log("Scored! New score: %u\n", score);
 }
 player::player(unsigned int x, unsigned y) : x(x), y(y) {
 }

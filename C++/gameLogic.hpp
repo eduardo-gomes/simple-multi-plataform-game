@@ -1,5 +1,4 @@
 #include <list>
-#include <cstdio>
 
 class player;
 
@@ -17,7 +16,6 @@ class fruit {
 
 class gameBoard {
 	std::list<fruit> fruitsList;  //to be optimized
-	FILE *outFile;
 
 	const unsigned int width, height;
 
@@ -30,7 +28,7 @@ class gameBoard {
 	std::list<fruit>::const_iterator getFruitsListIteratorBegin() const;
 	std::list<fruit>::const_iterator getFruitsListIteratorEnd() const;
 	pos getSize() const;
-	void TryMoveTo(player &player, unsigned int x, unsigned int y);
+	void TryMoveToAndScore(player &player, unsigned int x, unsigned int y);
 };
 
 class player {
@@ -43,5 +41,5 @@ class player {
 	~player();
 	pos getPos() const;
 	void charDirectionToPos(char direction, pos &pos);
-	friend void gameBoard::TryMoveTo(player &player, unsigned int x, unsigned int y);
+	friend void gameBoard::TryMoveToAndScore(player &player, unsigned int x, unsigned int y);
 };

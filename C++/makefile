@@ -3,5 +3,5 @@ CXXFLAGS=-std=c++17 -pedantic-errors -Wall -Wextra -Wsign-conversion -g -fanalyz
 LIBS=-lncurses
 DBG=-Og -g
 
-client.out: client.cpp gameLogic.cpp
+client.out: client.cpp gameLogic.cpp log.cpp
 		$(CXX) $^ $(CXXFLAGS) $(LIBS) $(DBG) -o $@

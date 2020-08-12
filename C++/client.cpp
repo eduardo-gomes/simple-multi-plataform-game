@@ -2,7 +2,7 @@
 
 #include "gameLogic.hpp"
 
-gameBoard game(16, 9);
+gameBoard game(40, 20);
 player localPlayer(2, 2);
 
 char inputToDirectionChar(char input) {
@@ -22,9 +22,9 @@ char inputToDirectionChar(char input) {
 void processInputDirection(char direction) {
 	pos newPos;
 	localPlayer.charDirectionToPos(direction, newPos);
-	game.TryMoveTo(localPlayer, newPos.x, newPos.y);
+	game.TryMoveToAndScore(localPlayer, newPos.x, newPos.y);
 }
-void processInput(char input) {
+void handleInput(char input) {
 	char inputDirection = inputToDirectionChar(input);
 	processInputDirection(inputDirection);
 }
@@ -98,7 +98,7 @@ int main() {
 		if (input == 27)
 			continueGame = false;
 		else
-			processInput(input);
+			handleInput(input);
 	}
 
 	endwin();
