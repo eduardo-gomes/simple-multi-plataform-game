@@ -21,7 +21,7 @@ class gameBoard {
 
    public:
 	gameBoard(unsigned int width, unsigned int height);
-	~gameBoard();
+	~gameBoard() = default;
 	void spawnFruit();
 	bool canMoveTo(unsigned int x, unsigned int y) const;
 	bool moveToAndReturnIfScored(unsigned int x, unsigned int y);

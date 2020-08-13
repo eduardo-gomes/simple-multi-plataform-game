@@ -23,9 +23,6 @@ gameBoard::gameBoard(unsigned int width, unsigned int height) : width(width), he
 	logger::log("HaHa\n");
 }
 
-gameBoard::~gameBoard() {
-}
-
 void gameBoard::spawnFruit() {
 	unsigned int x = randGen::GetUnsignedMod(width), y = randGen::GetUnsignedMod(height);
 	fruitsList.emplace_back(x, y);
