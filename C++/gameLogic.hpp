@@ -1,4 +1,5 @@
 #include <list>
+#include <string>
 
 class player;
 
@@ -7,7 +8,6 @@ struct pos {
 };
 
 class fruit {
-
    public:
 	unsigned int x, y;
 	fruit(unsigned int x, unsigned int y);	//Need to anounce to clients
@@ -33,11 +33,13 @@ class gameBoard {
 
 class player {
 	unsigned int score, x, y;
+	std::string name;
 	void addScore(unsigned add);
 	void movedTo(unsigned int x, unsigned int y);
 
    public:
 	player(unsigned x, unsigned y);
+	player(unsigned x, unsigned y, const std::string &name);
 	~player();
 	pos getPos() const;
 	void charDirectionToPos(char direction, pos &pos);

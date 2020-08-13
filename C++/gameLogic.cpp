@@ -34,8 +34,8 @@ bool gameBoard::canMoveTo(unsigned int x, unsigned int y) const {
 	return false;
 }
 bool gameBoard::moveToAndReturnIfScored(unsigned int x, unsigned int y) {
-	for(auto it = fruitsList.begin(); it != fruitsList.end(); ++it){
-		if(it->x == x && it->y == y){
+	for (auto it = fruitsList.begin(); it != fruitsList.end(); ++it) {
+		if (it->x == x && it->y == y) {
 			logger::log("colide with fruit, removing fruit and adding new\n");
 			fruitsList.erase(it);
 			spawnFruit();
@@ -66,8 +66,11 @@ void player::addScore(unsigned add) {
 	score += add;
 	if (add) logger::log("Scored! New score: %u\n", score);
 }
-player::player(unsigned int x, unsigned y) : x(x), y(y) {
+player::player(unsigned int x, unsigned int y) : score(0), x(x), y(y), name("local") {
 }
+player::player(unsigned int x, unsigned int y, const std::string& name) : score(0), x(x), y(y), name(name) {
+}
+
 player::~player() {
 }
 pos player::getPos() const {

@@ -9,7 +9,8 @@
 class server {
 	gameBoard game;
 	std::map<std::string, player> playersList;
-	public:
+
+   public:
 	server() : game(40, 20) {
 		logger::log("Initialized gameServer \n");
 	}
@@ -26,8 +27,18 @@ class server {
 			processInputDirection(player->second, dire);
 	}
 
-	pos getSize(){
+	pos getSize() {
 		return game.getSize();
+	}
+
+	void addNewPlayer(const std::string & name){
+		pos newPos = {2, 2};//game.randomEmptyPos();
+		player newPlayer(newPos.x, newPos.y, name);
+		playersList.emplace(name, std::move(newPlayer));
+	}
+
+	void removePlayer(const std::string& name){
+		playersList.erase(name);
 	}
 };
 
@@ -46,12 +57,12 @@ char inputToDirectionChar(char input) {
 	}
 }
 
-class clientGame{
-	protected:
-	gameBoard localGame;//(40, 20);
-	player localPlayer;//(2, 2);
+class clientGame {
+   protected:
+	gameBoard localGame;  //(40, 20);
+	player localPlayer;	  //(2, 2);
 
-	clientGame(unsigned int width, unsigned int height) : localGame(width, height), localPlayer(0, 0){
+	clientGame(unsigned int width, unsigned int height) : localGame(width, height), localPlayer(0, 0) {
 		logger::log("Initialized clientGame with %u x %u\n", width, height);
 	}
 
@@ -64,13 +75,12 @@ class clientGame{
 		char inputDirection = inputToDirectionChar(input);
 		processInputDirection(inputDirection);
 	}
-	void recvFromServer(){
-
+	void recvFromServer() {
 	}
 
 	virtual void display();
-	
-	void gameLoop(){
+
+	void gameLoop() {
 		bool continueGame = 1;
 		localGame.spawnFruit();
 		while (continueGame) {
@@ -81,7 +91,7 @@ class clientGame{
 				continueGame = false;
 			else
 				handleInput(input);
-				recvFromServer();
+			recvFromServer();
 		}
 	}
 };
@@ -93,7 +103,7 @@ class ncurses : public clientGame {
 		attron(COLOR_PAIR(FRUITS_PAIR));
 
 		for (auto it = localGame.getFruitsListIteratorBegin(); it != localGame.getFruitsListIteratorEnd(); ++it)
-			mvaddch(it->y + 1, it->x + 1, '#');
+			mvaddch((int)it->y + 1, (int)it->x + 1, '#');
 
 		attroff(COLOR_PAIR(FRUITS_PAIR));
 	}
@@ -109,7 +119,7 @@ class ncurses : public clientGame {
 
 		pos size = localGame.getSize();
 
-		drawnBox(0, 0, size.x + 1, size.y + 1);
+		drawnBox(0, 0, (int)size.x + 1, (int)size.y + 1);
 
 		attroff(COLOR_PAIR(BORDER_PAIR));
 	}
@@ -119,7 +129,7 @@ class ncurses : public clientGame {
 
 		pos pos = localPlayer.getPos();
 
-		move(pos.y + 1, pos.x + 1);
+		move((int)pos.y + 1, (int)pos.x + 1);
 		printw("P");
 
 		attroff(COLOR_PAIR(PLAYER_PAIR));
@@ -134,8 +144,9 @@ class ncurses : public clientGame {
 		printw("");
 		refresh();
 	}
-	public:
-	ncurses(unsigned int width, unsigned int height) : clientGame(width, height){
+
+   public:
+	ncurses(unsigned int width, unsigned int height) : clientGame(width, height) {
 		initscr();
 		curs_set(0);
 
@@ -147,22 +158,23 @@ class ncurses : public clientGame {
 
 		noecho();
 	}
-	~ncurses(){
+	~ncurses() {
 		endwin();
 	}
 
-	void display() override{
+	void display() override {
 		displayGame();
 	}
 };
 
-void clientGame::display(){
+void clientGame::display() {
 }
-
 
 int main() {
 	server localServer;
 	pos gameSize = localServer.getSize();
+	std::string playerName("player1");
+	localServer.addNewPlayer(playerName);
 	ncurses localClient(gameSize.x, gameSize.y);
 	localClient.display();
 	getch();

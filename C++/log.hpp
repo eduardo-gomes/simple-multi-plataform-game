@@ -5,8 +5,9 @@ class logger {
 	FILE* outPut;
 	static std::unique_ptr<logger> instance;
 	static logger& getInstance();
-	public:
+
+   public:
 	logger();
 	~logger();
-	static int log(const char *format, ...);
+	static int log(const char* format, ...);
 };
