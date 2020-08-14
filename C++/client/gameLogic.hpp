@@ -8,7 +8,7 @@ struct pos {
 class fruit {
    public:
 	unsigned int x, y;
-	fruit(pos);	//Need to anounce to clients
+	explicit fruit(pos);	//Need to anounce to clients
 	~fruit();								//Need to anounce to clients
 };
 
