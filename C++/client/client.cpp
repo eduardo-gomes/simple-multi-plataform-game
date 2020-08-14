@@ -3,44 +3,9 @@
 #include <map>
 #include <string>
 
+#include "../log.hpp"
 #include "gameLogic.hpp"
-#include "log.hpp"
-
-class server {
-	gameBoard game;
-	std::map<std::string, player> playersList;
-
-   public:
-	server() : game(40, 20) {
-		logger::log("Initialized gameServer \n");
-	}
-
-	void processInputDirection(player& player, char direction) {
-		pos newPos;
-		player.charDirectionToPos(direction, newPos);
-		game.TryMoveToAndScore(player, newPos.x, newPos.y);
-	}
-
-	void recvDirectionFromPlayer(const std::string& who, char dire) {
-		std::map<std::string, player>::iterator player = playersList.find(who);
-		if (player != playersList.end())
-			processInputDirection(player->second, dire);
-	}
-
-	pos getSize() {
-		return game.getSize();
-	}
-
-	void addNewPlayer(const std::string & name){
-		pos newPos = {2, 2};//game.randomEmptyPos();
-		player newPlayer(newPos.x, newPos.y, name);
-		playersList.emplace(name, std::move(newPlayer));
-	}
-
-	void removePlayer(const std::string& name){
-		playersList.erase(name);
-	}
-};
+//#include "types.hpp"
 
 char inputToDirectionChar(char input) {
 	switch (input) {
@@ -62,27 +27,24 @@ class clientGame {
 	gameBoard localGame;  //(40, 20);
 	player localPlayer;	  //(2, 2);
 
-	clientGame(unsigned int width, unsigned int height) : localGame(width, height), localPlayer(0, 0) {
+	clientGame(unsigned int width, unsigned int height) : localGame(width, height), localPlayer(pos({0, 0}), "LocalPlayer") {
 		logger::log("Initialized clientGame with %u x %u\n", width, height);
 	}
 
-	void processInputDirection(char direction) {
+	void movePlayerInDirection(char direction) {
 		pos newPos;
 		localPlayer.charDirectionToPos(direction, newPos);
-		localGame.TryMoveToAndScore(localPlayer, newPos.x, newPos.y);
+		localGame.moveTo(localPlayer, newPos);
 	}
 	void handleInput(char input) {
 		char inputDirection = inputToDirectionChar(input);
-		processInputDirection(inputDirection);
-	}
-	void recvFromServer() {
+		sendMoveDirectionToServer(inputDirection);
 	}
 
 	virtual void display();
 
 	void gameLoop() {
 		bool continueGame = 1;
-		localGame.spawnFruit();
 		while (continueGame) {
 			clear();
 			display();
@@ -171,10 +133,8 @@ void clientGame::display() {
 }
 
 int main() {
-	server localServer;
-	pos gameSize = localServer.getSize();
+	pos gameSize = {10, 10};
 	std::string playerName("player1");
-	localServer.addNewPlayer(playerName);
 	ncurses localClient(gameSize.x, gameSize.y);
 	localClient.display();
 	getch();

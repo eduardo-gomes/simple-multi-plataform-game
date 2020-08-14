@@ -4,7 +4,7 @@
 #include <stdexcept>
 
 logger::logger() {
-	outPut = fopen("/dev/pts/0", "w");
+	outPut = fopen("log.fifo", "w");
 	if (outPut == nullptr) throw std::runtime_error("Can't open logfile");
 }
 logger::~logger() {
