@@ -4,4 +4,4 @@
 #DBG=-Og -g
 
 client.out: client.cpp
-		$(CXX) $^ $(CXXFLAGS) $(LIBS) $(DBG) -o $@
+		$(CXX) $^ $(CXXFLAGS) $(INCLUDE) $(LIBS) $(DBG) -o $@

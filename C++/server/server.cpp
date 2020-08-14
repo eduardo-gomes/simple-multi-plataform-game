@@ -2,7 +2,7 @@
 #include <string>
 
 #include "gameLogic.hpp"
-#include "log.hpp"
+#include "../log.hpp"
 
 class server {
 	gameBoard game;
@@ -39,3 +39,7 @@ class server {
 		playersList.erase(name);
 	}
 };
+
+int main(){
+	
+}

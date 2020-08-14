@@ -1,7 +1,10 @@
 #include <list>
 #include <string>
 
-#include "types.hpp"
+class player;
+struct pos {
+	unsigned int x, y;
+};
 
 class fruit {
    public:

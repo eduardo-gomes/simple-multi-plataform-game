@@ -4,4 +4,4 @@
 #DBG=-Og -g
 
 server.out: server.cpp
-		$(CXX) $^ $(CXXFLAGS) $(LIBS) $(DBG) -o $@
+	$(CXX) $^ $(CXXFLAGS) $(INCLUDE) $(LIBS) $(DBG) -o $@

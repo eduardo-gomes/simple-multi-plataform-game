@@ -1,0 +1,3 @@
+[submodule "C++/dependencies/json"]
+	path = C++/dependencies/json
+	url = git@github.com:nlohmann/json.git
