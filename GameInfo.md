@@ -15,7 +15,7 @@ Quando um jogador se conectar pela primeira vez, o servidor deve mandar o tamanh
 
 ## Todas as mensagems deve possuir o segunte formato
 
--   type: {Movment | Response | Remove | Disconnect | Initialize} the type of the message
+-   type: {Movment | Response | Remove | Disconnect | Initialize | Fruit} the type of the message
 -   message: any of the following messages
 
 ### Movment
@@ -25,14 +25,17 @@ O pacote que informa ao servidor que o jogador tenta se movimentar deve possuir:
 -   direction: `{'L' | 'R' | 'U' | 'D'}` indica a direção do movimento
 -   id: identificador unico dos jogadores
 
-### Response
+o score deve ser incluido toda vez que houver uma alteração, porem pode estar presente mesmo que não ocorra
+-   score: inteiro
+
+### Response/Player set
 
 O pacote que o servidor manda para os clientes deve possuir:
 
 -   id
--   position: [X][Y] posição do jogador no tabuleiro com origem no canto superior esquerdo
+-   position: \[X]\[Y] posição do jogador no tabuleiro com origem no canto superior esquerdo
 
-Podendo possuir
+Podendo possuir, caso o cliente não receba o nome nenhuma vez, utilizará o id como nome
 
 -   name: 
 
@@ -46,6 +49,12 @@ Possui apenas o id e é um pedido de desconexão mandado ao servidor
 
 ### Initialize
 
-Possui o tamanho do tabuleiro que o cliente recebe ao se conectar
+Possui o tamanho do tabuleiro que o cliente recebe ao se conectar, todas as frutas e outros jogadores
 
 -   size: {X: Number; Y: Number}
+
+### Fruit
+Possui a posição de uma fruta, e um boleano que indica se sera adicionado ou removido
+
+-   add: bool
+-   poition:
