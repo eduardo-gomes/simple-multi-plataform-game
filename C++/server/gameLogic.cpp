@@ -2,7 +2,7 @@
 
 #include <random>
 
-#include "log.hpp"
+#include "../log.hpp"
 
 namespace randGen {
 std::default_random_engine ranEng((uint_fast32_t)time(NULL));
@@ -66,12 +66,23 @@ void player::addScore(unsigned add) {
 	score += add;
 	if (add) logger::log("Scored! New score: %u\n", score);
 }
-player::player(unsigned int x, unsigned int y) : score(0), x(x), y(y), name("local") {
+player::player(unsigned int x, unsigned int y) : score(0), x(x), y(y), name("local"), id(name) {
+	id += "-ID";
 }
-player::player(unsigned int x, unsigned int y, const std::string& name) : score(0), x(x), y(y), name(name) {
+player::player(unsigned int x, unsigned int y, const std::string& name) : score(0), x(x), y(y), name(name), id(name) {
+	id += "-ID";
 }
 
 player::~player() {
+}
+unsigned int player::getScore() const{
+	return score;
+}
+const std::string& player::getName() const{
+	return name;
+}
+const std::string& player::getId() const{
+	return id;
 }
 pos player::getPos() const {
 	return {x, y};

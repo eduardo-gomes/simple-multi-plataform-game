@@ -1,3 +1,4 @@
+#pragma once
 #include <list>
 #include <string>
 
@@ -32,7 +33,7 @@ class gameBoard {
 
 class player {
 	unsigned int score, x, y;
-	std::string name;
+	std::string name, id;
 	void addScore(unsigned add);
 	void movedTo(unsigned int x, unsigned int y);
 
@@ -40,6 +41,9 @@ class player {
 	player(unsigned x, unsigned y);
 	player(unsigned x, unsigned y, const std::string &name);
 	~player();
+	unsigned int getScore() const;
+	const std::string & getName() const;
+	const std::string & getId() const;
 	pos getPos() const;
 	void charDirectionToPos(char direction, pos &pos);
 	friend void gameBoard::TryMoveToAndScore(player &player, unsigned int x, unsigned int y);
