@@ -1,8 +1,10 @@
 #include <map>
 #include <string>
+#include <iostream>
 
 #include "gameLogic.hpp"
 #include "../log.hpp"
+#include "json_conversions.hpp"
 
 class server {
 	gameBoard game;
@@ -41,5 +43,9 @@ class server {
 };
 
 int main(){
-	
+	player p1(1, 2, "player1");
+	std::string p1String = toJsonToString(p1);
+	std::cout << "Splited: " << p1String << std::endl;
+	playerSetMsg fromJson = fromJsonToString(p1String);
+	std::cout << fromJson.id << " " << fromJson.name << std::endl;
 }
