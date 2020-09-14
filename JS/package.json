@@ -1,0 +1,22 @@
+{
+  "name": "simple-mp-game",
+  "version": "1.0.0",
+  "description": "",
+  "main": " ",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eduardo-gomes/simple-multi-plataform-game.git"
+  },
+  "author": "Eduardo de Matos Gomes",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/eduardo-gomes/simple-multi-plataform-game/issues"
+  },
+  "homepage": "https://github.com/eduardo-gomes/simple-multi-plataform-game#readme",
+  "devDependencies": {
+    "typescript": "^4.0.2"
+  }
+}
