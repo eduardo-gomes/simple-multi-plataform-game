@@ -2,7 +2,7 @@ document.body.innerHTML += "JS";
 
 interface position{
 	x: number, y:number;
-};
+}
 
 class Screen2D{
 	context: CanvasRenderingContext2D;
@@ -25,92 +25,125 @@ class Screen2D{
 	}
 }
 
-class player{
+abstract class drawnable{
 	private _pos: position;
-	private playerColor = "blue";
-	constructor(x = 0, y = 0){
-		this._pos = {x, y};
+	private color: string;
+	protected constructor(x = 0, y = 0, color = "black") {
+		this._pos = { x, y };
+		this.color = color;
 	}
-	drawn(ctx: Screen2D){
-		ctx.drawnPixel(this._pos, this.playerColor);
+	drawn(ctx: Screen2D) {
+		ctx.drawnPixel(this._pos, this.color);
 	}
-	get pos(): position{
+	get pos(): position {
 		return this._pos;
 	}
-	set pos(newPos: position){
+	set pos(newPos: position) {
 		this._pos = newPos;
+	}
+}
+
+class player extends drawnable{
+	constructor(x = 0, y = 0){
+		const playerColor = "blue";
+		super(x, y, playerColor);
+	}
+}
+
+class fruit extends drawnable{
+	constructor(x: number, y: number) {
+		const color = "red";
+		super(x, y, color);
 	}
 }
 
 class gameBoard{
 	size: position;
 	players: Array<player>;
+	fruits: Array<fruit>;
 	constructor(size: position){
 		this.size = size;
-		this.players = new Array();
+		this.players = [];
+		this.fruits = [];
 		this.players.push(new player());
 		console.log("Create gameBoard with x: %d, y: %d", size.x, size.y);
 	}
+	genFood(){
+		const randX = Math.floor((Math.random() * this.size.x));
+		const randy = Math.floor((Math.random() * this.size.y));
+		const newFood = new fruit(randX, randy);
+		this.fruits.push(newFood);
+	}
 	display(){
 		render.clear();
-		for(var player in this.players){
-			this.players[player].drawn(render);
-		}
+		this.fruits.forEach((food) => {food.drawn(render);});
+		this.players.forEach((player) => {player.drawn(render);});
 	}
 }
 
-class gameLogic{
-	static getdeltaPosFromKey(key: string){
-		switch(key){
-			case "w":
-				return {x: 0, y: -1};
-			case "a":
-				return {x: -1, y: 0};
-			case "s":
-				return {x: 0, y: 1};
-			case "d":
-				return {x: 1, y: 0};
-		}
-		throw new Error(`Invalid Key: ${key}`);
+//namespace gameLogic{
+function getdeltaPosFromKey(key: string){
+	switch(key){
+		case "w":
+			return {x: 0, y: -1};
+		case "a":
+			return {x: -1, y: 0};
+		case "s":
+			return {x: 0, y: 1};
+		case "d":
+			return {x: 1, y: 0};
 	}
-	static posAdd(p1: position, p2: position){
-		return { x: p1.x + p2.x, y: p1.y + p2.y};
-	}
-	static isInsideBoard(pos: position){
-		if((pos.x < game.size.x && pos.x >= 0) && (pos.y < game.size.y && pos.y >= 0))
-			return true;
-		else
-			return false;
-	}
-	static handleUserInput(input: string){
-		let player = game.players[0];
-		const oldPos = player.pos;
-		let newPos = gameLogic.posAdd(oldPos, gameLogic.getdeltaPosFromKey(input));
-		if(gameLogic.isInsideBoard(newPos))
-			player.pos = newPos;
-		else
-			console.log("Cant move player to x: %d, y: %d", newPos.x, newPos.y);
-	}
+	throw new Error(`Invalid Key: ${key}`);
 }
+function posAdd(p1: position, p2: position){
+	return { x: p1.x + p2.x, y: p1.y + p2.y};
+}
+function isInsideBoard(pos: position){
+	if((pos.x < game.size.x && pos.x >= 0) && (pos.y < game.size.y && pos.y >= 0))
+		return true;
+	else
+		return false;
+}
+function handleUserInput(input: string){
+	const player = game.players[0];
+	const oldPos = player.pos;
+	const newPos = posAdd(oldPos, getdeltaPosFromKey(input));
+	if(isInsideBoard(newPos)){
+		player.pos = newPos;
+		collisionDetectionAndHandle(player, game.fruits);
+	}else
+		console.log("Cant move player to x: %d, y: %d", newPos.x, newPos.y);
+}
+function collisionDetectionAndHandle(player: player, fruits: Array<fruit>){
+	const playerPos = player.pos;
+	const detectFunction = (function(food: fruit){
+		const foodPos = food.pos;
+		const colide = (playerPos.x === foodPos.x && playerPos.y === foodPos.y);
+		if(colide){
+			console.log("player collided with food at x: %d, y: %d", playerPos.x, playerPos.y);
+		}
+		return !colide;
+	});
+	game.fruits = fruits.filter(detectFunction);
+}
+//}//namespace gameLogic
 
-let game = new gameBoard({x: 20, y: 10});
+const game = new gameBoard({x: 20, y: 10});
 
-var canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
-var render = new Screen2D(canvas);
-
-game.players.push(new player(2, 2));
-game.players.push(new player(5, 7));
+const canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
+const render = new Screen2D(canvas);
 
 game.display();
 
 document.addEventListener("keypress", function(e){
-	gameLogic.handleUserInput(e.key);
+	if(e.key == " ") game.genFood();
+	else
+		handleUserInput(e.key);
 });
 
-{
-function walk(){//ES5 dont allow function declaration inside block in strict mode
+
+function walk(){
 	game.display();
 	setTimeout(walk, 10);//100FPS
 }
 walk();
-}
