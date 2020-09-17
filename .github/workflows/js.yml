@@ -1,0 +1,36 @@
+name: Deploy JS
+
+on:
+  push:
+    branches: [ master ]
+    patchs:
+    - "JS/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      js-directory: ./JS/
+    steps:
+    - uses: actions/checkout@v2
+      
+    - name: npm install
+      run: npm install
+      working-directory: ${{env.js-directory}}
+      
+    - name: build
+      run: npm run-script build
+      working-directory: ${{env.js-directory}}
+
+    - name: Copy out files via scp
+      uses: appleboy/scp-action@master
+      env:
+        HOST: ${{ secrets.HOST }}
+        USERNAME: ${{ secrets.USERNAME }}
+        PORT: ${{ secrets.PORT }}
+        KEY: ${{ secrets.SSHKEY }}
+      with:
+        source: "${{env.js-directory}}out/*"
+        target: "/var/www/mp-game/js"
+        strip_components: 2
+        overwrite: true
