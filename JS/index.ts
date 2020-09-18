@@ -25,7 +25,7 @@ class Screen2D{
 	}
 }
 
-abstract class drawnable{
+abstract class Drawnable{
 	private _pos: position;
 	private color: string;
 	protected constructor(x = 0, y = 0, color = "black") {
@@ -43,35 +43,40 @@ abstract class drawnable{
 	}
 }
 
-class player extends drawnable{
+class Player extends Drawnable{
+	points: number;
 	constructor(x = 0, y = 0){
 		const playerColor = "blue";
 		super(x, y, playerColor);
+		this.points = 0;
+	}
+	addPoint(){
+		this.points++;
 	}
 }
 
-class fruit extends drawnable{
+class Fruit extends Drawnable{
 	constructor(x: number, y: number) {
 		const color = "red";
 		super(x, y, color);
 	}
 }
 
-class gameBoard{
+class GameBoard{
 	size: position;
-	players: Array<player>;
-	fruits: Array<fruit>;
+	players: Array<Player>;
+	fruits: Array<Fruit>;
 	constructor(size: position){
 		this.size = size;
 		this.players = [];
 		this.fruits = [];
-		this.players.push(new player());
+		this.players.push(new Player());
 		console.log("Create gameBoard with x: %d, y: %d", size.x, size.y);
 	}
 	genFood(){
 		const randX = Math.floor((Math.random() * this.size.x));
 		const randy = Math.floor((Math.random() * this.size.y));
-		const newFood = new fruit(randX, randy);
+		const newFood = new Fruit(randX, randy);
 		this.fruits.push(newFood);
 	}
 	display(){
@@ -114,12 +119,13 @@ function handleUserInput(input: string){
 	}else
 		console.log("Cant move player to x: %d, y: %d", newPos.x, newPos.y);
 }
-function collisionDetectionAndHandle(player: player, fruits: Array<fruit>){
+function collisionDetectionAndHandle(player: Player, fruits: Array<Fruit>){
 	const playerPos = player.pos;
-	const detectFunction = (function(food: fruit){
+	const detectFunction = (function(food: Fruit){
 		const foodPos = food.pos;
 		const colide = (playerPos.x === foodPos.x && playerPos.y === foodPos.y);
 		if(colide){
+			player.addPoint();
 			console.log("player collided with food at x: %d, y: %d", playerPos.x, playerPos.y);
 		}
 		return !colide;
@@ -128,7 +134,7 @@ function collisionDetectionAndHandle(player: player, fruits: Array<fruit>){
 }
 //}//namespace gameLogic
 
-const game = new gameBoard({x: 20, y: 10});
+const game = new GameBoard({x: 20, y: 10});
 
 const canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
 const render = new Screen2D(canvas);
@@ -136,7 +142,7 @@ const render = new Screen2D(canvas);
 game.display();
 
 document.addEventListener("keypress", function(e){
-	if(e.key == " ") game.genFood();
+	if(e.key === " ") game.genFood();
 	else
 		handleUserInput(e.key);
 });
@@ -147,3 +153,10 @@ function walk(){
 	setTimeout(walk, 10);//100FPS
 }
 walk();
+
+let spawnDelay = 2500;
+function spawn(){
+	game.genFood();
+	setTimeout(spawn, spawnDelay);
+}
+spawn();
