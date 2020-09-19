@@ -5,11 +5,33 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>JS</title>
+	<style>
+		#gameContainer {
+			display: flex;
+			justify-content: center;
+		}
+		#gameCanvas {
+			height: calc(70vw / 2);
+			width: 70vw;
+			border: 1px solid black;
+			image-rendering: pixelated;
+			image-rendering: crisp-edges;
+			image-rendering: -moz-crisp-edges;
+		}
+		.id::after {
+			content: ": ";
+		}
+		#scoresContainer {
+			width: 5rem;
+		}
+	</style>
 </head>
 
 <body>
-	Body
-	 <canvas id="myCanvas" width="20" height="10" style="height: 700px;width: 1400px;border: 1px solid black; image-rendering: pixelated; image-rendering: crisp-edges; image-rendering: -moz-crisp-edges"></canvas>
+	<div id="gameContainer">
+		<canvas id="gameCanvas" width="20" height="10"></canvas>
+		<div id="scoresContainer"></div>
+	</div>
 </body>
 <script src="./index.js"></script>
 </html>

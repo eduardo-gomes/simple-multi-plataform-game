@@ -1,5 +1,3 @@
-document.body.innerHTML += "JS";
-
 interface position{
 	x: number, y:number;
 }
@@ -25,6 +23,42 @@ class Screen2D{
 	}
 }
 
+class ScoreBoard{
+	scoreboard: HTMLDivElement;
+	constructor(scoreboard: HTMLDivElement){
+		this.scoreboard = scoreboard;
+	}
+	createNewScoreElement(id: string){
+		const scoreContainer = document.createElement("div");
+		const scorePlayerID = document.createElement("span");
+		const scorePlayerScore = document.createElement("span");
+		scoreContainer.id = id;
+		scorePlayerID.className = "id";
+		scorePlayerID.textContent = id;
+		scorePlayerScore.className = "score";
+		scoreContainer.appendChild(scorePlayerID);
+		scoreContainer.appendChild(scorePlayerScore);
+		this.scoreboard.appendChild(scoreContainer);
+		return scoreContainer;
+	}
+	getScoreElementByID(id: string){
+		let scoreDiv = document.getElementById(id) as HTMLDivElement | null;
+		if(scoreDiv == null){
+			scoreDiv = this.createNewScoreElement(id);
+		}
+		const scoreSpan = scoreDiv.getElementsByClassName("score").item(0) as HTMLSpanElement | null;
+		if(scoreSpan == null){
+			throw new Error(`Cant find score span for ID: ${id}`);
+		}
+		return scoreSpan;
+	}
+	setScore(id: string, score: number){
+		const scoreSpan = this.getScoreElementByID(id);
+		scoreSpan.textContent = String(score);
+	}
+}
+const scoreBoard = new ScoreBoard(document.getElementById("scoresContainer") as HTMLDivElement);
+
 abstract class Drawnable{
 	private _pos: position;
 	private color: string;
@@ -44,14 +78,27 @@ abstract class Drawnable{
 }
 
 class Player extends Drawnable{
-	points: number;
+	_points: number;
 	constructor(x = 0, y = 0){
 		const playerColor = "blue";
 		super(x, y, playerColor);
-		this.points = 0;
+		this._points = 0;
 	}
 	addPoint(){
-		this.points++;
+		this._points++;
+	}
+	get points(){
+		return this._points;
+	}
+	moveDelta(delta: position){
+		const oldPos = this.pos;
+		const newPos = posAdd(oldPos, delta);
+		if (isInsideBoard(newPos)) {
+			this.pos = newPos;
+			return true;
+		} else
+			console.log("Cant move player to x: %d, y: %d", newPos.x, newPos.y);
+			return false;
 	}
 }
 
@@ -111,13 +158,11 @@ function isInsideBoard(pos: position){
 }
 function handleUserInput(input: string){
 	const player = game.players[0];
-	const oldPos = player.pos;
-	const newPos = posAdd(oldPos, getdeltaPosFromKey(input));
-	if(isInsideBoard(newPos)){
-		player.pos = newPos;
+	const moveDetla = getdeltaPosFromKey(input);
+	const hasMoved = player.moveDelta(moveDetla);
+	if(hasMoved){
 		collisionDetectionAndHandle(player, game.fruits);
-	}else
-		console.log("Cant move player to x: %d, y: %d", newPos.x, newPos.y);
+	}
 }
 function collisionDetectionAndHandle(player: Player, fruits: Array<Fruit>){
 	const playerPos = player.pos;
@@ -126,6 +171,7 @@ function collisionDetectionAndHandle(player: Player, fruits: Array<Fruit>){
 		const colide = (playerPos.x === foodPos.x && playerPos.y === foodPos.y);
 		if(colide){
 			player.addPoint();
+			scoreBoard.setScore("P1", player.points)
 			console.log("player collided with food at x: %d, y: %d", playerPos.x, playerPos.y);
 		}
 		return !colide;
@@ -136,15 +182,17 @@ function collisionDetectionAndHandle(player: Player, fruits: Array<Fruit>){
 
 const game = new GameBoard({x: 20, y: 10});
 
-const canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
+const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
 const render = new Screen2D(canvas);
 
 game.display();
 
 document.addEventListener("keypress", function(e){
-	if(e.key === " ") game.genFood();
-	else
+	if(e.key === " "){
+		game.genFood();
+	}else{
 		handleUserInput(e.key);
+	}
 });
 
 
