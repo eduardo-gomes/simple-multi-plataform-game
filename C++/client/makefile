@@ -1,7 +1,0 @@
-#CXX=g++-10
-#CXXFLAGS=-std=c++17 -pedantic-errors -Wall -Wextra -Wsign-conversion -g -fanalyzer -fanalyzer-verbosity=3
-#LIBS=-lncurses
-#DBG=-Og -g
-
-client.out: client.cpp
-		$(CXX) $^ $(CXXFLAGS) $(INCLUDE) $(LIBS) $(DBG) -o $@
