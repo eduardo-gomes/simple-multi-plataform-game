@@ -1,6 +1,9 @@
 interface position {
 	x: number, y: number;
 }
+interface newPos {
+	name: string, pos: [number, number];
+}
 
 class Screen2D {
 	context: CanvasRenderingContext2D;
@@ -60,10 +63,12 @@ class ScoreBoard {
 const scoreBoard = new ScoreBoard(document.getElementById("scoresContainer") as HTMLDivElement);
 
 abstract class Drawnable {
+	private _id: string;
 	private _pos: position;
 	private color: string;
-	protected constructor(x = 0, y = 0, color = "black") {
+	protected constructor(x = 0, y = 0, id: string, color = "black") {
 		this._pos = { x, y };
+		this._id = id;
 		this.color = color;
 	}
 	drawn(ctx: Screen2D) {
@@ -75,13 +80,16 @@ abstract class Drawnable {
 	set pos(newPos: position) {
 		this._pos = newPos;
 	}
+	public getid(): string {
+		return this._id;
+	}
 }
 
 class Player extends Drawnable {
 	_points: number;
-	constructor(x = 0, y = 0) {
+	constructor(id: string) {
 		const playerColor = "blue";
-		super(x, y, playerColor);
+		super(-1, -1, id, playerColor);
 		this._points = 0;
 	}
 	addPoint() {
@@ -104,33 +112,30 @@ class Player extends Drawnable {
 }
 
 class Fruit extends Drawnable {
-	constructor(x: number, y: number) {
+	constructor(x: number, y: number, id:string) {
 		const color = "red";
-		super(x, y, color);
+		super(x, y, id, color);
 	}
 }
 
 class GameBoard {
 	size: position;
-	players: Array<Player>;
-	fruits: Array<Fruit>;
+	players: Object;
+	fruits: Object;
 	constructor(size: position) {
 		this.size = size;
-		this.players = [];
-		this.fruits = [];
-		this.players.push(new Player());
+		this.players = {};
+		this.fruits = {};
 		console.log("Create gameBoard with x: %d, y: %d", size.x, size.y);
-	}
-	genFood() {
-		const randX = Math.floor((Math.random() * this.size.x));
-		const randy = Math.floor((Math.random() * this.size.y));
-		const newFood = new Fruit(randX, randy);
-		this.fruits.push(newFood);
 	}
 	display() {
 		render.clear();
-		this.fruits.forEach((food) => { food.drawn(render); });
-		this.players.forEach((player) => { player.drawn(render); });
+		Object.values(this.fruits).forEach((fruit: Fruit) => {
+			fruit.drawn(render);
+		});
+		Object.values(this.players).forEach((player: Player) => {
+			player.drawn(render);
+		});
 	}
 }
 
@@ -156,28 +161,54 @@ function isInsideBoard(pos: position) {
 	return isInsideBoard;
 }
 function handleUserInput(input: string) {
-	const player = game.players[0];
+	const player = myPlayer;
 	const moveDetla = getdeltaPosFromKey(input);
 	const hasMoved = player.moveDelta(moveDetla);
-	if (hasMoved) {
-		collisionDetectionAndHandle(player, game.fruits);
+	if (hasMoved) {//This is done on server side too
+		const sendObj = {move: input};
+		socket.send(JSON.stringify(sendObj));
 	}
 }
-function collisionDetectionAndHandle(player: Player, fruits: Array<Fruit>) {
-	const playerPos = player.pos;
-	const detectFunction = (function (food: Fruit) {
-		const foodPos = food.pos;
-		const colide = (playerPos.x === foodPos.x && playerPos.y === foodPos.y);
-		if (colide) {
-			player.addPoint();
-			scoreBoard.setScore("P1", player.points);
-			console.log("player collided with food at x: %d, y: %d", playerPos.x, playerPos.y);
-		}
-		return !colide;
-	});
-	game.fruits = fruits.filter(detectFunction);
-}
 //}//namespace gameLogic
+
+var myID: string;
+var myPlayer: Player;
+function newPlayer(id: string, position: position): Player{
+	const newPlayerDesc = Object.create(null) as PropertyDescriptor;
+	newPlayerDesc.enumerable = true;
+	newPlayerDesc.writable = true;
+	newPlayerDesc.value = new Player(id) as Player;
+	newPlayerDesc.value.pos = position;
+	return Object.defineProperty(game.players, id, newPlayerDesc)[id];
+}
+function SetPlayerPos(id: string, position: position){
+	const players: any = game.players;//Unsafe ?
+	if (!players.hasOwnProperty(id)){
+		newPlayer(id, position);
+	}
+	const player = players[id] as Player;
+	player.pos = position;
+	//console.log(player);
+}
+function handleServerMsg(event: MessageEvent<any>){
+	//console.log('Message from server ', event.data);
+	const msg = JSON.parse(event.data);
+	if ("YourID" in msg){
+		myID = msg.YourID;
+		myPlayer = newPlayer(myID, {x: 0, y: 0});
+		console.log("My id: %s", myID)
+	}else if ("newPos" in msg){
+		const newPosDesc = Object.getOwnPropertyDescriptor(msg, "newPos");
+		if(newPosDesc === undefined) throw new Error("newPosDesc Received is undefined");
+		const newPos = newPosDesc.value as newPos;
+		const pos = {x: newPos.pos[0], y: newPos.pos[1]};
+		console.log("SetPlayerPos(%s, %s)", newPos.name, JSON.stringify(pos));
+		SetPlayerPos(newPos.name, pos);
+	}
+}
+
+const socket = new WebSocket('ws://localhost:8765');
+socket.addEventListener('message', handleServerMsg);
 
 const game = new GameBoard({ x: 20, y: 10 });
 
@@ -187,11 +218,7 @@ const render = new Screen2D(canvas);
 game.display();
 
 document.addEventListener("keypress", function (e) {
-	if (e.key === " ") {
-		game.genFood();
-	} else {
-		handleUserInput(e.key);
-	}
+	handleUserInput(e.key);
 });
 
 
@@ -200,10 +227,3 @@ function walk() {
 	setTimeout(walk, 10);//100FPS
 }
 walk();
-
-let spawnDelay = 2500;
-function spawn() {
-	game.genFood();
-	setTimeout(spawn, spawnDelay);
-}
-spawn();
