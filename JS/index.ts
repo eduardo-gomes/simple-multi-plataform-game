@@ -175,6 +175,7 @@ var myID: string;
 var myPlayer: Player;
 function newPlayer(id: string, position: position): Player{
 	const newPlayerDesc = Object.create(null) as PropertyDescriptor;
+	newPlayerDesc.configurable = true;
 	newPlayerDesc.enumerable = true;
 	newPlayerDesc.writable = true;
 	newPlayerDesc.value = new Player(id) as Player;
@@ -190,9 +191,7 @@ function SetPlayerPos(id: string, position: position){
 	player.pos = position;
 	//console.log(player);
 }
-function handleServerMsg(event: MessageEvent<any>){
-	//console.log('Message from server ', event.data);
-	const msg = JSON.parse(event.data);
+function handleServerMsgJson(msg: any) {
 	if ("YourID" in msg){
 		myID = msg.YourID;
 		myPlayer = newPlayer(myID, {x: 0, y: 0});
@@ -204,6 +203,24 @@ function handleServerMsg(event: MessageEvent<any>){
 		const pos = {x: newPos.pos[0], y: newPos.pos[1]};
 		console.log("SetPlayerPos(%s, %s)", newPos.name, JSON.stringify(pos));
 		SetPlayerPos(newPos.name, pos);
+	} else if ("remove" in msg){
+		const removeID = msg.remove as string;
+		console.log("remove: %s", removeID)
+		if (game.players.hasOwnProperty(removeID)) {
+			const players: any = game.players; //TS7053
+			delete players[removeID];
+		}
+	}else{
+		console.log(msg)
+	}
+}
+function handleServerMsg(event: MessageEvent<any>){
+	//console.log('Message from server ', event.data);
+	const msg = JSON.parse(event.data);
+	if (Array.isArray(msg)){
+		msg.forEach(handleServerMsgJson)
+	}else{
+		handleServerMsgJson(msg)
 	}
 }
 

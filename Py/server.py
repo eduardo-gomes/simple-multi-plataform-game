@@ -10,10 +10,22 @@ import sgame
 wsConnection = websockets.server.WebSocketServerProtocol
 USERS: Dict[wsConnection, str] = dict()
 
+async def sendToAll(toSend):
+	if USERS:  # asyncio.wait doesn't accept an empty list
+		await asyncio.wait([ws.send(toSend) for ws in USERS])
+
+async def sendAllTo(websocket: wsConnection):
+	Jobject = json.dumps(sgame.getAll())
+	await websocket.send(Jobject)
+
+async def removeByID(id: str):
+	await sendToAll('{{"remove": "{}"}}'.format(id))
+
 async def register(websocket: wsConnection):
+	await sendAllTo(websocket)
 	userID = uuid.uuid4().hex
 	USERS[websocket] = userID
-	print("registered", userID)
+	print("registered  ", userID)
 	sgame.players[userID] = sgame.Player(userID)
 	await websocket.send('{{"YourID": "{}"}}'.format(userID))
 	await notify_move(userID)
@@ -21,20 +33,19 @@ async def unregister(websocket: wsConnection):
 	removedID = USERS.pop(websocket)
 	sgame.players.pop(removedID)
 	print("unregistered", removedID)
+	await removeByID(removedID)
 
 async def notify_move(id: str):
 	pos = sgame.players[id].getPos()
 	msg = '{{"newPos": {{"name": "{}", "pos": [{}, {}]}}}}'.format(id, pos[0], pos[1])
-	if USERS:  # asyncio.wait doesn't accept an empty list
-		await asyncio.wait([ws.send(msg) for ws in USERS])
+	await sendToAll(msg)
 async def notify_fruit(id: str, create: bool):
 	fruit = sgame.Fruit(id)
 	fruit.setPos(sgame.genRandPos())
 	sgame.fruits[id] = fruit
 	pos = fruit.getPos()
 	msg = '{{"fruit": {{"name": "{}", "pos": [{}, {}], "create": "{}"}}}}'.format(id, pos[0], pos[1], create)
-	if USERS:  # asyncio.wait doesn't accept an empty list
-		await asyncio.wait([ws.send(msg) for ws in USERS])
+	await sendToAll(msg)
 	print("Fruit {}: {}".format(id, create))
 
 async def handler(ws: wsConnection, message: str):

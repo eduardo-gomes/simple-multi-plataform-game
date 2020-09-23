@@ -49,7 +49,16 @@ def removeFruit(id: str):
 	removedFruit = fruits.pop(id)
 	return removedFruit
 
+def getNewPosObj(fromObj: Player):
+	return {"newPos": {"name": fromObj.uuid, "pos": fromObj.getPos()}} #'{{"newPos": {{"name": "{}", "pos": [{}, {}]}}}}'.format(id, pos[0], pos[1])
 
+def getAll():
+	outObj = list()
+	for player in players.values():
+		outObj.append(getNewPosObj(player))
+	for fruit in fruits.values():
+		outObj.append(getNewPosObj(fruit))
+	return outObj
 
 
 players: Dict[str, Player] = dict()
