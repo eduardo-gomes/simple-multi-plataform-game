@@ -17,7 +17,8 @@ def deltaFromDir(dir: str):
 def addPos(p1, p2):
 	return (p1[0] + p2[0], p1[1] + p2[1])
 
-class Player:
+class Positionable:
+	typeNum = 0
 	def __init__(self, uuid):
 		self.uuid = uuid
 		self.pos = genRandPos()
@@ -25,7 +26,17 @@ class Player:
 		return self.pos
 	def setPos(self, pos):
 		self.pos = pos
-Fruit = Player
+class Player(Positionable):
+	def __init__(self, uuid):
+		super().__init__(uuid)
+		self.typeNum = 1
+		self.score = 0
+	def incrementScore(self):
+		self.score += 1
+class Fruit(Positionable):
+	def __init__(self, uuid):
+		super().__init__(uuid)
+		self.typeNum = 2
 
 def genRandPos():
 	return (random.randrange(0, gameSize[0]), random.randrange(0, gameSize[1]))
@@ -49,8 +60,11 @@ def removeFruit(id: str):
 	removedFruit = fruits.pop(id)
 	return removedFruit
 
-def getNewPosObj(fromObj: Player):
-	return {"newPos": {"name": fromObj.uuid, "pos": fromObj.getPos()}} #'{{"newPos": {{"name": "{}", "pos": [{}, {}]}}}}'.format(id, pos[0], pos[1])
+def getNewPosObj(fromObj: Positionable):
+	newPosObj = {"newPos": {"name": fromObj.uuid, "pos": fromObj.getPos(), "type": fromObj.typeNum}} #'{{"newPos": {{"name": "{}", "pos": [{}, {}]}}}}'.format(id, pos[0], pos[1])
+	if isinstance(fromObj, Player):
+		newPosObj["newPos"]["score"] = fromObj.score
+	return newPosObj
 
 def getAll():
 	outObj = list()

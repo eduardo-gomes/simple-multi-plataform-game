@@ -2,7 +2,8 @@ interface position {
 	x: number, y: number;
 }
 interface newPos {
-	name: string, pos: [number, number];
+	name: string, pos: [number, number], type: number;
+	score?: number;
 }
 
 class Screen2D {
@@ -92,8 +93,8 @@ class Player extends Drawnable {
 		super(-1, -1, id, playerColor);
 		this._points = 0;
 	}
-	addPoint() {
-		this._points++;
+	set points(to: number) {
+		this._points = to;
 	}
 	get points() {
 		return this._points;
@@ -105,14 +106,14 @@ class Player extends Drawnable {
 			this.pos = newPos;
 			return true;
 		} else {
-			console.log("Cant move player to x: %d, y: %d", newPos.x, newPos.y);
+			//console.log("Cant move player to x: %d, y: %d", newPos.x, newPos.y);
 			return false;
 		}
 	}
 }
 
 class Fruit extends Drawnable {
-	constructor(x: number, y: number, id:string) {
+	constructor(x: number, y: number, id: string) {
 		const color = "red";
 		super(x, y, id, color);
 	}
@@ -165,7 +166,7 @@ function handleUserInput(input: string) {
 	const moveDetla = getdeltaPosFromKey(input);
 	const hasMoved = player.moveDelta(moveDetla);
 	if (hasMoved) {//This is done on server side too
-		const sendObj = {move: input};
+		const sendObj = { move: input };
 		socket.send(JSON.stringify(sendObj));
 	}
 }
@@ -173,53 +174,94 @@ function handleUserInput(input: string) {
 
 var myID: string;
 var myPlayer: Player;
-function newPlayer(id: string, position: position): Player{
-	const newPlayerDesc = Object.create(null) as PropertyDescriptor;
-	newPlayerDesc.configurable = true;
-	newPlayerDesc.enumerable = true;
-	newPlayerDesc.writable = true;
-	newPlayerDesc.value = new Player(id) as Player;
-	newPlayerDesc.value.pos = position;
-	return Object.defineProperty(game.players, id, newPlayerDesc)[id];
+function newFruitOrPlayer(id: string, obj: Player | Fruit): Player | Fruit {
+	const newDesc = Object.create(null) as PropertyDescriptor;
+	newDesc.configurable = true;
+	newDesc.enumerable = true;
+	newDesc.writable = true;
+	newDesc.value = obj;
+	let DescTarget;
+	if (obj instanceof Player) {
+		DescTarget = game.players;
+	} else if (obj instanceof Fruit) {
+		DescTarget = game.fruits;
+	} else throw new Error("Object isan't instance of Player or Fruit");
+	return Object.defineProperty(DescTarget, id, newDesc)[id];
 }
-function SetPlayerPos(id: string, position: position){
-	const players: any = game.players;//Unsafe ?
-	if (!players.hasOwnProperty(id)){
-		newPlayer(id, position);
+function getByID(ID: string) {
+	let TargetObj;
+	if (ID in game.players) {
+		const players: any = game.players;//Unsafe ?
+		TargetObj = players[ID] as Player;
+	} else if (ID in game.fruits) {
+		const fruits: any = game.fruits;//Unsafe ?
+		TargetObj = fruits[ID] as Fruit;
+	} else return;
+	return TargetObj;
+}
+function SetPos(newPos: newPos) {
+	let TargetObj: Player | Fruit;
+	const got = getByID(newPos.name);
+	if (got != undefined) {
+		TargetObj = got;
+		if (got instanceof Fruit) {
+			console.warn("Fruits Position shouldn't be changed ID: %s", newPos.name)
+		}
+	} else {
+		let newObj: Fruit | Player;
+		if (newPos.type === 1) {
+			newObj = new Player(newPos.name);
+		} else if (newPos.type === 2) {
+			newObj = new Fruit(newPos.pos[0], newPos.pos[1], newPos.name);
+		} else throw new Error("Unknow newPosObj Type " + JSON.stringify(newPos));
+		TargetObj = newFruitOrPlayer(newPos.name, newObj);
 	}
-	const player = players[id] as Player;
-	player.pos = position;
-	//console.log(player);
+	TargetObj.pos = { x: newPos.pos[0], y: newPos.pos[1] };
+	if (newPos.score != undefined) {
+		const player = TargetObj;
+		if (player instanceof Player && player.points != newPos.score) {
+			player.points = newPos.score;
+			scoreBoard.setScore(newPos.name, player.points);
+		}
+	}
+	return TargetObj;
+}
+function removeByID(removeID: string) {
+	console.log("remove: %s", removeID)
+	if (game.players.hasOwnProperty(removeID)) {
+		const players: any = game.players; //TS7053
+		delete players[removeID];
+	} else if (game.fruits.hasOwnProperty(removeID)) {
+		const fruits: any = game.fruits; //TS7053
+		delete fruits[removeID];
+	} else {
+		console.warn("not find %s", removeID);
+	}
 }
 function handleServerMsgJson(msg: any) {
-	if ("YourID" in msg){
+	if ("YourID" in msg) {
 		myID = msg.YourID;
-		myPlayer = newPlayer(myID, {x: 0, y: 0});
+		myPlayer = newFruitOrPlayer(myID, new Player(myID)) as Player;
 		console.log("My id: %s", myID)
-	}else if ("newPos" in msg){
+	} else if ("newPos" in msg) {
 		const newPosDesc = Object.getOwnPropertyDescriptor(msg, "newPos");
-		if(newPosDesc === undefined) throw new Error("newPosDesc Received is undefined");
+		if (newPosDesc === undefined) throw new Error("newPosDesc Received is undefined");
 		const newPos = newPosDesc.value as newPos;
-		const pos = {x: newPos.pos[0], y: newPos.pos[1]};
-		console.log("SetPlayerPos(%s, %s)", newPos.name, JSON.stringify(pos));
-		SetPlayerPos(newPos.name, pos);
-	} else if ("remove" in msg){
+		console.log("SetrPos(%s, %s)", newPos.name, JSON.stringify(newPos.pos));
+		SetPos(newPos);
+	} else if ("remove" in msg) {
 		const removeID = msg.remove as string;
-		console.log("remove: %s", removeID)
-		if (game.players.hasOwnProperty(removeID)) {
-			const players: any = game.players; //TS7053
-			delete players[removeID];
-		}
-	}else{
+		removeByID(removeID);
+	} else {
 		console.log(msg)
 	}
 }
-function handleServerMsg(event: MessageEvent<any>){
+function handleServerMsg(event: MessageEvent<any>) {
 	//console.log('Message from server ', event.data);
 	const msg = JSON.parse(event.data);
-	if (Array.isArray(msg)){
+	if (Array.isArray(msg)) {
 		msg.forEach(handleServerMsgJson)
-	}else{
+	} else {
 		handleServerMsgJson(msg)
 	}
 }
@@ -244,3 +286,7 @@ function walk() {
 	setTimeout(walk, 10);//100FPS
 }
 walk();
+
+function requestFruit() {
+	socket.send(JSON.stringify({ "create": "" }))
+}

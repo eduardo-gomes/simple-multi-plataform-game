@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #https://www.websocket.org/echo.html
 import asyncio
 import websockets
@@ -36,17 +36,13 @@ async def unregister(websocket: wsConnection):
 	await removeByID(removedID)
 
 async def notify_move(id: str):
-	pos = sgame.players[id].getPos()
-	msg = '{{"newPos": {{"name": "{}", "pos": [{}, {}]}}}}'.format(id, pos[0], pos[1])
-	await sendToAll(msg)
-async def notify_fruit(id: str, create: bool):
-	fruit = sgame.Fruit(id)
-	fruit.setPos(sgame.genRandPos())
-	sgame.fruits[id] = fruit
-	pos = fruit.getPos()
-	msg = '{{"fruit": {{"name": "{}", "pos": [{}, {}], "create": "{}"}}}}'.format(id, pos[0], pos[1], create)
-	await sendToAll(msg)
-	print("Fruit {}: {}".format(id, create))
+	if id in sgame.players:
+		Obj = sgame.players[id]
+	elif id in sgame.fruits:
+		Obj = sgame.fruits[id]
+	else: return
+	newPosObj = sgame.getNewPosObj(Obj)
+	await sendToAll(json.dumps(newPosObj))
 
 async def handler(ws: wsConnection, message: str):
 	jmsg = json.loads(message)
@@ -54,15 +50,16 @@ async def handler(ws: wsConnection, message: str):
 		print('{} move in direction: {}'.format(USERS[ws], jmsg["move"]))
 		player = sgame.players[USERS[ws]]
 		player.setPos(sgame.addPos(player.getPos(), sgame.deltaFromDir(jmsg["move"])))
-		await notify_move(USERS[ws])
 		removedFruits = sgame.collide(player)
+		player.score += len(removedFruits)
+		await notify_move(USERS[ws])
 		for id in removedFruits:
-			await notify_fruit(id, 0)
+			await removeByID(id)
 			sgame.removeFruit(id)
 	if "create" in jmsg:
 		newFruitID = uuid.uuid4().hex
 		sgame.newFruit(newFruitID)
-		await notify_fruit(newFruitID, 1)
+		await notify_move(newFruitID)
 
 async def wsmain(websocket: wsConnection, path):
 	await register(websocket)
