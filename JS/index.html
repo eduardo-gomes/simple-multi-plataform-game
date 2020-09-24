@@ -21,8 +21,25 @@
 		.id::after {
 			content: ": ";
 		}
-		#scoresContainer {
-			width: 5rem;
+		#scoresContainer::before {
+			content: "ScoreBoard";
+		}
+		#scoresContainer > div{
+			align-items: center;
+			display: flex;
+			text-overflow: ellipsis;
+			overflow: hidden;
+		}
+		#scoresContainer > div > *{
+			text-overflow: ellipsis;
+			overflow: hidden;
+		}
+		.id{
+			width: 16ex;
+			display: inline-block;
+		}
+		.score{
+			width: 5ex;
 		}
 	</style>
 </head>

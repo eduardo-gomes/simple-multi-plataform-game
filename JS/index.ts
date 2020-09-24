@@ -91,7 +91,7 @@ class Player extends Drawnable {
 	constructor(id: string) {
 		const playerColor = "blue";
 		super(-1, -1, id, playerColor);
-		this._points = 0;
+		this._points = NaN;
 	}
 	set points(to: number) {
 		this._points = to;
