@@ -5,6 +5,24 @@ interface newPos {
 	name: string, pos: [number, number], type: number;
 	score?: number;
 }
+const connection = new class {
+	connection: WebSocket | undefined;
+	constructor(url: string) {
+		this.setUrl(url);
+	}
+	setUrl(url: string) {
+		if (this.connection) {
+			this.connection.close();
+		}
+		this.connection = new WebSocket(url);
+		this.connection.addEventListener('message', handleServerMsg);
+	}
+	send(msg: string) {
+		if (this.connection) {
+			this.connection.send(msg);
+		}
+	}
+}("ws://localhost:8765");
 
 class Screen2D {
 	context: CanvasRenderingContext2D;
@@ -66,7 +84,7 @@ const scoreBoard = new ScoreBoard(document.getElementById("scoresContainer") as 
 abstract class Drawnable {
 	private _id: string;
 	private _pos: position;
-	private color: string;
+	protected color: string;
 	protected constructor(x = 0, y = 0, id: string, color = "black") {
 		this._pos = { x, y };
 		this._id = id;
@@ -98,6 +116,9 @@ class Player extends Drawnable {
 	}
 	get points() {
 		return this._points;
+	}
+	setLocalColor() {
+		super.color = "green";
 	}
 	moveDelta(delta: position) {
 		const oldPos = this.pos;
@@ -167,7 +188,7 @@ function handleUserInput(input: string) {
 	const hasMoved = player.moveDelta(moveDetla);
 	if (hasMoved) {//This is done on server side too
 		const sendObj = { move: input };
-		socket.send(JSON.stringify(sendObj));
+		connection.send(JSON.stringify(sendObj));
 	}
 }
 //}//namespace gameLogic
@@ -242,12 +263,13 @@ function handleServerMsgJson(msg: any) {
 	if ("YourID" in msg) {
 		myID = msg.YourID;
 		myPlayer = newFruitOrPlayer(myID, new Player(myID)) as Player;
+		myPlayer.setLocalColor();
 		console.log("My id: %s", myID)
 	} else if ("newPos" in msg) {
 		const newPosDesc = Object.getOwnPropertyDescriptor(msg, "newPos");
 		if (newPosDesc === undefined) throw new Error("newPosDesc Received is undefined");
 		const newPos = newPosDesc.value as newPos;
-		console.log("SetrPos(%s, %s)", newPos.name, JSON.stringify(newPos.pos));
+		//console.log("SetrPos(%s, %s)", newPos.name, JSON.stringify(newPos.pos));
 		SetPos(newPos);
 	} else if ("remove" in msg) {
 		const removeID = msg.remove as string;
@@ -265,9 +287,17 @@ function handleServerMsg(event: MessageEvent<any>) {
 		handleServerMsgJson(msg)
 	}
 }
-
-const socket = new WebSocket('ws://localhost:8765');
-socket.addEventListener('message', handleServerMsg);
+function connectTo(url: string) {
+	try {
+		connection.setUrl(url);
+	} catch (error) {
+		if (error instanceof SyntaxError) {
+			console.error("invalid URL");
+		} else {
+			throw error;
+		}
+	}
+}
 
 const game = new GameBoard({ x: 20, y: 10 });
 
@@ -288,5 +318,5 @@ function walk() {
 walk();
 
 function requestFruit() {
-	socket.send(JSON.stringify({ "create": "" }))
+	connection.send(JSON.stringify({ "create": "" }))
 }

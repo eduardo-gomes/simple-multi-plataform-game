@@ -44,6 +44,11 @@ async def notify_move(id: str):
 	newPosObj = sgame.getNewPosObj(Obj)
 	await sendToAll(json.dumps(newPosObj))
 
+async def createNewFruit():
+	newFruitID = uuid.uuid4().hex
+	sgame.newFruit(newFruitID)
+	await notify_move(newFruitID)
+
 async def handler(ws: wsConnection, message: str):
 	jmsg = json.loads(message)
 	if "move" in jmsg:
@@ -57,9 +62,7 @@ async def handler(ws: wsConnection, message: str):
 			await removeByID(id)
 			sgame.removeFruit(id)
 	if "create" in jmsg:
-		newFruitID = uuid.uuid4().hex
-		sgame.newFruit(newFruitID)
-		await notify_move(newFruitID)
+		await createNewFruit()
 
 async def wsmain(websocket: wsConnection, path):
 	await register(websocket)
@@ -70,6 +73,14 @@ async def wsmain(websocket: wsConnection, path):
 		await unregister(websocket)
 	#here closes the connection
 
+async def foodGenLoop():
+	while(1):
+		timer = asyncio.sleep(2)
+		if sgame.players and (len(sgame.fruits) < 10):
+			await createNewFruit()
+		await timer
+
 asyncio.get_event_loop().run_until_complete(
     websockets.serve(wsmain, 'localhost', 8765))
+asyncio.get_event_loop().run_until_complete(foodGenLoop())
 asyncio.get_event_loop().run_forever()
